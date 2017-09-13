@@ -1,6 +1,7 @@
 var AjaxRequest = require('./services/ajax_request.js');
 var countryUrl = 'https://restcountries.eu/rest/v2';
 
-window.addEvenetListers('load', function(){
+window.addEventListener('load', function(){
   var ajaxRequest = new AjaxRequest(countryUrl);
+  ajaxRequest.getData();
 })
