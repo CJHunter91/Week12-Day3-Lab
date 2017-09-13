@@ -69,13 +69,47 @@
 
 var AjaxRequest = __webpack_require__(1);
 var CountryView = __webpack_require__(2);
+
 var countryUrl = 'https://restcountries.eu/rest/v2';
+var databaseUrl = 'http://localhost:3000/api/bucket_list';
 
 window.addEventListener('load', function(){
   var ajaxRequest = new AjaxRequest(countryUrl);
   var countryView = new CountryView();
   ajaxRequest.getData(countryView.render);
+
+  var form = document.querySelector('#countrylist');
+
+  form.addEventListener('submit', function(event){
+    event.preventDefault();
+
+    var arr = []
+    for (var country of this.country){
+      if (country.checked){
+        arr.push(country.value);
+      }
+    };
+
+    //console.log(packageData(arr,'countries'));
+
+    var ajaxRequestPost = new AjaxRequest(databaseUrl);
+    ajaxRequestPost.post(packageData(arr, 'countries'));
+
+  });
 })
+
+var packageData = function(indexArr, key){
+  var countryData = JSON.parse(localStorage.getItem(key));
+  var arr = [];
+  for (var index of indexArr){
+    var obj = {
+      name: countryData[index].name,
+      latlng: countryData[index].latlng
+    }
+    arr.push(obj);
+  }
+  return(arr);
+}
 
 /***/ }),
 /* 1 */
@@ -94,11 +128,25 @@ AjaxRequest.prototype = {
     request.onload = function(){
       if(request.status === 200){
         var jsonString = request.responseText;
+        localStorage.setItem('countries', jsonString);
         this.data = JSON.parse(jsonString);
         callback(this.data);
       }
     }.bind(this);
     request.send();
+  },
+
+  post: function(data){
+    var request = new XMLHttpRequest();
+    request.open("POST", this.url);
+    request.setRequestHeader("Content-Type", "application/json");
+    request.onload = function(){
+      if(request.status === 200){
+        var jsonString = request.responseText;
+        this.data = JSON.parse(jsonString);
+      }
+    }.bind(this);
+    request.send(JSON.stringify(data));
   }
  
 }
@@ -117,9 +165,21 @@ var CountryView = function(){
 CountryView.prototype = {
 
   render: function(data){
-    console.log(data);
-  }
+    var container = document.querySelector('#countrylist');
 
+    data.forEach(function(item, index){
+
+      var p = document.createElement('p');
+      var input = document.createElement('input');
+      input.type = 'checkbox';
+      input.name = 'country';
+      input.value = index;
+      p.innerHTML = item.name;
+      p.appendChild(input);
+      container.appendChild(p);
+
+    });
+  }
 }
 
 module.exports = CountryView;
